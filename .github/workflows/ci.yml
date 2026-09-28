@@ -6,16 +6,30 @@ on:
   push:
     branches: [staging, main, beta]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: pnpm
-      - run: corepack enable && pnpm install
-      - run: pnpm run check-types
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high
+
+      - name: Typecheck
+        run: pnpm run check-types

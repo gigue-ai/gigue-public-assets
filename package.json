@@ -1,6 +1,7 @@
 {
   "name": "@gigue/work-glyphs",
   "version": "0.1.0",
+  "packageManager": "pnpm@10.9.0",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
