@@ -98,6 +98,16 @@ function GoogleDriveIcon({ className, size = 16 }: IconProps) {
   );
 }
 
+function GoogleDocsIcon({ className, size = 16 }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 48 48" aria-hidden>
+      <path d="M9 4h20l10 10v29a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" fill="#4285F4" />
+      <path d="M29 4v10h10" fill="#AECBFA" />
+      <path d="M16 25h16M16 31h16M16 37h11" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function NotionIcon({ className, size = 16 }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" aria-hidden>
@@ -472,6 +482,8 @@ const ICON_MAP: Record<string, (props: IconProps) => ReactElement> = {
   google_calendar: GoogleCalendarIcon,
   'google-drive': GoogleDriveIcon,
   google_drive: GoogleDriveIcon,
+  'google-docs': GoogleDocsIcon,
+  google_docs: GoogleDocsIcon,
   notion: NotionIcon,
   people: PeopleIcon,
   agents: AgentsIcon,
@@ -480,7 +492,7 @@ const ICON_MAP: Record<string, (props: IconProps) => ReactElement> = {
 
 function normalizeConnectorType(type: string): string {
   let normalized = type.trim().toLowerCase().replace(/_/g, '-');
-  for (const prefix of ['composio-', 'gigue-', 'native-']) {
+  for (const prefix of ['composio-connector-', 'gigue-connector-', 'composio-', 'gigue-', 'native-']) {
     if (normalized.startsWith(prefix)) {
       normalized = normalized.slice(prefix.length);
       break;
@@ -490,6 +502,10 @@ function normalizeConnectorType(type: string): string {
     case 'googlecalendar':
     case 'calendar':
       return 'google-calendar';
+    case 'google-gmail':
+    case 'googlegmail':
+    case 'googlemail':
+      return 'gmail';
     case 'googledrive':
     case 'drive':
       return 'google-drive';
