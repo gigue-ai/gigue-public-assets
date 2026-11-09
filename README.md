@@ -1,4 +1,4 @@
-# @gigue/work-glyphs
+# Gigue Public Assets (`@gigue/work-glyphs`)
 
 Canonical Gigue domain glyphs (placement kinds, connector brands, inventory icons) and other **public** brand/UI assets.
 
