@@ -6,17 +6,52 @@ on:
   push:
     branches: [staging, main, beta]
 
+# One run per ref: a newer push to a PR cancels the run it supersedes. Pushes to
+# the lane branches are never cancelled.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  # `ci` is a required check, so this workflow cannot use paths-ignore: a workflow
+  # that never starts leaves the check pending and the PR unmergeable. Skipping the
+  # job reports the check as passed, so a docs-only PR costs one short job.
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # Anything short of a clean "every changed file is docs" runs the full job.
+          code=true
+          if [[ -n "$PR" ]]; then
+            files="$(gh api "repos/${REPO}/pulls/${PR}/files" --paginate --jq '.[].filename' || true)"
+            if [[ -n "$files" ]] && ! grep -qvE '^(docs/.*|.*\.md|\.coderabbit\.yaml)$' <<<"$files"; then
+              code=false
+            fi
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   test:
     name: ci
+    needs: changes
+    # always(): a failed `changes` job must run the tests, not skip them.
+    if: ${{ always() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          persist-credentials: false
 
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
 
@@ -31,5 +66,16 @@ jobs:
       - name: Audit dependencies
         run: pnpm audit --audit-level=high
 
-      - name: Typecheck
-        run: pnpm run check-types
+      - name: Lint
+        if: hashFiles('eslint.config.js', 'eslint.config.mjs', 'eslint.config.cjs', '.eslintrc.cjs', '.eslintrc.json') != ''
+        run: pnpm run lint
+
+      - name: Test
+        run: pnpm run --if-present test
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Docker build (dry run)
+        if: hashFiles('Dockerfile') != ''
+        run: docker build -t "ci-check:${{ github.sha }}" .
