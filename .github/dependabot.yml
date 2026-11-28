@@ -4,5 +4,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+    # Cap open Dependabot PRs to limit Actions minutes from ambient dep noise.
+    open-pull-requests-limit: 5
     target-branch: staging
+    groups:
+      npm-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
